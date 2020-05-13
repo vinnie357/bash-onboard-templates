@@ -20,11 +20,13 @@ nodeVersion='12.x'
 sudo apt-get update -y
 sudo apt-get install -y libsecret-1-dev
 ## install NodeJs
+echo "install nodejs"
 # set node repo
 curl -sL https://deb.nodesource.com/setup_$nodeVersion | sudo bash -
 # install node
-sudo apt install nodejs
+sudo apt-get install nodejs -y
 ## install docker
+echo "install docker"
 set -ex \
 && curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add - \
 && curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key --keyring /usr/share/keyrings/cloud.google.gpg add - \
@@ -35,17 +37,18 @@ set -ex \
 && echo "docker" \
 && sudo usermod -aG docker $user \
 && sudo chown -R $user: /var/run/docker.sock
-## account setup for NPM to not need sudo
-sudo chown -R $user:$user /home/$user/
 echo "test tools"
 echo '# test tools' >>/home/$user/.bashrc
 echo '/bin/bash /testTools.sh' >>/home/$user/.bashrc
 cat > /testTools.sh <<EOF 
 #!/bin/bash
 echo "=====Installed Versions====="
-echo "docker: $(docker --version)"
-echo "node: $(node --version)"
-echo "npm: $(npm --version)"
+echo "docker:"
+docker --version
+echo "node:"
+node --version
+echo "npm:"
+npm --version
 echo "=====Installed Versions====="
 EOF
 
@@ -60,5 +63,6 @@ do
 done
 IFS=$ifsDefault
 cd $cwd
+sudo chown -R $user:$user /home/$user/
 echo "=====done====="
 exit
