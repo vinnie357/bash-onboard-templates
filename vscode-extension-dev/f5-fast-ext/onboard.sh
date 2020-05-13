@@ -12,10 +12,13 @@ fi
 
 exec 1>$LOG_FILE 2>&1
 
-# variables# repos"
+# variables
+# repos
 repositories="${repositories}"
 user="${user}"
+# tool versions
 nodeVersion='12.x'
+echo "=====starting====="
 # dependecies
 sudo apt-get update -y
 sudo apt-get install -y libsecret-1-dev
