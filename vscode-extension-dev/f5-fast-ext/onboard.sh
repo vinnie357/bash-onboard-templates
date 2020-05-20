@@ -75,8 +75,11 @@ systemctl --user enable --now code-server
 cat > /coder.conf <<EOF
 server {
     listen       80;
+    listen       443 ssl;
     server_name  localhost;
-    
+    ssl_certificate     /cert/server.crt; # The certificate file
+    ssl_certificate_key /cert/server.key; # The private key file
+
     location / {
         proxy_pass http://127.0.0.1:8080;
     }
@@ -88,7 +91,15 @@ server {
 
 }
 EOF
+echo "====self signed cert===="
+mkdir -p /cert
+cd /cert
+openssl genrsa -des3 -passout pass:1234 -out server.pass.key 2048
+openssl rsa -passin pass:1234 -in server.pass.key -out server.key
+rm server.pass.key
+openssl req -new -key server.key -out server.csr -subj "/C=US/ST=testville/L=testerton/O=Test testing/OU=Test Department/CN=test.example.com"
+openssl x509 -req -sha256 -days 365 -in server.csr -signkey server.key -out server.crt
 echo "=====start nginx====="
-docker run --network="host" --restart always --name nginx-coder -v /coder.conf:/etc/nginx/conf.d/default.conf -p 80:80 -d nginx
+docker run --network="host" --restart always --name nginx-coder -v /coder.conf:/etc/nginx/conf.d/default.conf -v /cert:/cert -p 443:443 -p 80:80 -d nginx
 echo "=====done====="
 exit
