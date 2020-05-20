@@ -67,5 +67,28 @@ done
 IFS=$ifsDefault
 cd $cwd
 sudo chown -R $user:$user /home/$user/
+echo "=====install coder====="
+curl -sSOL https://github.com/cdr/code-server/releases/download/v3.3.1/code-server_3.3.1_amd64.deb
+sudo dpkg -i code-server_3.3.1_amd64.deb
+systemctl --user enable --now code-server
+# Now visit http://127.0.0.1:8080. Your password is in ~/.config/code-server/config.yaml
+cat > /coder.conf <<EOF
+server {
+    listen       80;
+    server_name  localhost;
+    
+    location / {
+        proxy_pass http://127.0.0.1:8080;
+    }
+
+    error_page   500 502 503 504  /50x.html;
+    location = /50x.html {
+        root   /usr/share/nginx/html;
+    }
+
+}
+EOF
+echo "=====start nginx====="
+docker run --network="host" --restart always --name nginx-coder -v /coder.conf:/etc/nginx/conf.d/default.conf -p 80:80 -d nginx
 echo "=====done====="
 exit
