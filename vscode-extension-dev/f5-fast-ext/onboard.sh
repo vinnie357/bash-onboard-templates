@@ -70,7 +70,20 @@ sudo chown -R $user:$user /home/$user/
 echo "=====install coder====="
 curl -sSOL https://github.com/cdr/code-server/releases/download/v3.3.1/code-server_3.3.1_amd64.deb
 sudo dpkg -i code-server_3.3.1_amd64.deb
-systemctl --user enable --now code-server
+cat > /lib/systemd/system/code-server.service <<EOF
+[Unit]
+Description=code-server
+
+[Service]
+Type=simple
+#Environment=PASSWORD=your_password
+ExecStart=/usr/bin/code-server --bind-addr 127.0.0.1:8080 --user-data-dir /var/lib/code-server --auth password
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+EOF
+sudo systemctl enable --now code-server
 # Now visit http://127.0.0.1:8080. Your password is in ~/.config/code-server/config.yaml
 cat > /coder.conf <<EOF
 server {
