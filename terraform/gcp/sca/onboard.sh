@@ -89,9 +89,9 @@ cat > /coder.conf <<EOF
 server {
     listen 80 default_server;
     server_name _;
-    return 301 https://$host$request_uri;
+    return 301 https://\$host\$request_uri;
 }
-map $http_upgrade $connection_upgrade {
+map \$http_upgrade \$connection_upgrade {
         default upgrade;
         '' close;
     }
@@ -101,9 +101,9 @@ server {
     ssl_certificate     /cert/server.crt; # The certificate file
     ssl_certificate_key /cert/server.key; # The private key file
     proxy_http_version 1.1;
-    proxy_set_header Upgrade $http_upgrade;
-    proxy_set_header Connection $connection_upgrade;
-    proxy_set_header Host $host;
+    proxy_set_header Upgrade \$http_upgrade;
+    proxy_set_header Connection \$connection_upgrade;
+    proxy_set_header Host \$host;
 
     location / {
         proxy_pass http://127.0.0.1:8080;
