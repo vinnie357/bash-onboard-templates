@@ -22,8 +22,11 @@ set -ex \
 && curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key --keyring /usr/share/keyrings/cloud.google.gpg add - \
 && echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] http://packages.cloud.google.com/apt cloud-sdk main" | sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list \
 && sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" \
+&& curl -sL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor | sudo tee /etc/apt/trusted.gpg.d/microsoft.asc.gpg > /dev/null \
+&& AZ_REPO=$(lsb_release -cs) \
+&& echo "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ $AZ_REPO main" | sudo tee /etc/apt/sources.list.d/azure-cli.list \
 && sudo apt-get update -y \
-&& sudo apt-get install -y apt-transport-https wget unzip jq git software-properties-common python3-pip ca-certificates gnupg-agent docker-ce docker-ce-cli containerd.io google-cloud-sdk \
+&& sudo apt-get install -y apt-transport-https wget unzip jq git software-properties-common python3-pip ca-certificates gnupg-agent docker-ce docker-ce-cli containerd.io google-cloud-sdk azure-cli \
 && echo "docker" \
 && sudo usermod -aG docker $user \
 && sudo chown -R $user: /var/run/docker.sock \
@@ -54,6 +57,7 @@ inspec version
 terragrunt -version
 f5 --version
 gcloud version
+az --version
 echo "=====Installed Versions====="
 EOF
 echo "clone repositories"
