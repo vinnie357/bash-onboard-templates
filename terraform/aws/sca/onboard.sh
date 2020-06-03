@@ -14,7 +14,6 @@ exec 1>$LOG_FILE 2>&1
 
 ## variables
 repositories="${repositories}"
-user="${user}"
 #tool versions
 terraformVersion="0.12.23"
 terragruntVersion="0.23.4"

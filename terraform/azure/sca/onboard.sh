@@ -68,6 +68,9 @@ cd /home/$user
 for repo in $repositories
 do
     git clone $repo
+    name=$(basename $repo )
+    folder=$(basename $name .git)
+    sudo chown -R $user $folder
 done
 IFS=$ifsDefault
 cd $cwd
