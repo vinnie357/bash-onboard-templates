@@ -71,8 +71,8 @@ done
 IFS=$ifsDefault
 cd $cwd
 echo "=====install coder====="
-curl -sSOL https://github.com/cdr/code-server/releases/download/v3.3.1/code-server_3.3.1_amd64.deb
-sudo dpkg -i code-server_3.3.1_amd64.deb
+curl -sSOL https://github.com/cdr/code-server/releases/download/v3.4.1/code-server_3.4.1_amd64.deb
+sudo dpkg -i code-server_3.4.1_amd64.deb
 cat > /lib/systemd/system/code-server.service <<EOF
 [Unit]
 Description=code-server
@@ -90,9 +90,8 @@ WantedBy=multi-user.target
 EOF
 sudo systemctl enable --now code-server
 # install extensions for coder as user
-su $user
 wget $(curl -s https://api.github.com/repos/DumpySquare/vscode-f5-fast/releases | grep browser_download_url | grep '.vsix' | head -n 1 | cut -d '"' -f 4) 
-code-server --install-extension $(ls *vsix)
+sudo -u $user code-server --install-extension $(ls *vsix)
 # exit user install
 su root
 rm *.vsix

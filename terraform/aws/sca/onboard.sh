@@ -14,6 +14,7 @@ exec 1>$LOG_FILE 2>&1
 
 ## variables
 repositories="${repositories}"
+user="ubuntu"
 #tool versions
 terraformVersion="0.12.23"
 terragruntVersion="0.23.4"
@@ -65,8 +66,8 @@ set -ex \
 && sudo apt-get update -y \
 && sudo apt-get install -y apt-transport-https wget unzip jq git software-properties-common python3-pip ca-certificates gnupg-agent docker-ce docker-ce-cli containerd.io \
 && echo "docker" \
-&& sudo usermod -aG docker ubuntu \
-&& sudo chown -R ubuntu: /var/run/docker.sock \
+&& sudo usermod -aG docker $user \
+&& sudo chown -R $user: /var/run/docker.sock \
 && echo "terraform" \
 && sudo wget https://releases.hashicorp.com/terraform/$terraformVersion/terraform_"$terraformVersion"_linux_amd64.zip \
 && sudo unzip ./terraform_"$terraformVersion"_linux_amd64.zip -d /usr/local/bin/ \
@@ -85,8 +86,8 @@ set -ex \
 && terraform -install-autocomplete
 
 echo "test tools"
-echo '# test tools' >>/home/ubuntu/.bashrc
-echo '/bin/bash /testTools.sh' >>/home/ubuntu/.bashrc
+echo '# test tools' >>/home/$user/.bashrc
+echo '/bin/bash /testTools.sh' >>/home/$user/.bashrc
 cat > /testTools.sh <<EOF 
 #!/bin/bash
 echo "=====Installed Versions====="
@@ -102,18 +103,18 @@ echo "clone repositories"
 cwd=$(pwd)
 ifsDefault=$IFS
 IFS=','
-cd /home/ubuntu
+cd /home/$user
 for repo in $repositories
 do
     git clone $repo
     name=$(basename $repo )
     folder=$(basename $name .git)
-    sudo chown -R ubuntu $folder
+    sudo chown -R $user $folder
 done
 IFS=$ifsDefault
 echo "=====install coder====="
-curl -sSOL https://github.com/cdr/code-server/releases/download/v3.3.1/code-server_3.3.1_amd64.deb
-sudo dpkg -i code-server_3.3.1_amd64.deb
+curl -sSOL https://github.com/cdr/code-server/releases/download/v3.4.1/code-server_3.4.1_amd64.deb
+sudo dpkg -i code-server_3.4.1_amd64.deb
 cat > /lib/systemd/system/code-server.service <<EOF
 [Unit]
 Description=code-server
@@ -131,9 +132,8 @@ WantedBy=multi-user.target
 EOF
 sudo systemctl enable --now code-server
 # install extensions for coder as user
-su ubuntu
 wget $(curl -s https://api.github.com/repos/DumpySquare/vscode-f5-fast/releases | grep browser_download_url | grep '.vsix' | head -n 1 | cut -d '"' -f 4) 
-code-server --install-extension $(ls *vsix)
+sudo -u $user code-server --install-extension $(ls *vsix)
 # exit user install
 su root
 rm *.vsix
