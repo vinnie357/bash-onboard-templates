@@ -130,9 +130,12 @@ Restart=always
 WantedBy=multi-user.target
 EOF
 sudo systemctl enable --now code-server
-# install extensions for coder
+# install extensions for coder as user
+su ubuntu
 wget $(curl -s https://api.github.com/repos/DumpySquare/vscode-f5-fast/releases | grep browser_download_url | grep '.vsix' | head -n 1 | cut -d '"' -f 4) 
 code-server --install-extension $(ls *vsix)
+# exit user install
+exit
 rm *.vsix
 systemctl restart code-server 
 # Now visit http://127.0.0.1:8080. Your password is in ~/.config/code-server/config.yaml
