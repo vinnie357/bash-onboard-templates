@@ -103,7 +103,6 @@ rm -f /var/lib/waagent/custom-script/download/0/$file
 sudo -u $user code-server --install-extension /home/$user/$file
 # exit user install
 su root
-rm *.vsix
 systemctl restart code-server 
 # Now visit http://127.0.0.1:8080. Your password is in ~/.config/code-server/config.yaml
 cat > /coder.conf <<EOF
