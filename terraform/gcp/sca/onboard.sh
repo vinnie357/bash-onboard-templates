@@ -79,9 +79,10 @@ Description=code-server
 
 [Service]
 Type=simple
+User=${user}
 #Environment=PASSWORD=your_password
 #ExecStart=/usr/bin/code-server --bind-addr 127.0.0.1:8080 --user-data-dir /var/lib/code-server --auth password
-ExecStart=/usr/bin/code-server --bind-addr 127.0.0.1:8080 --user-data-dir /var/lib/code-server --auth none
+ExecStart=/usr/bin/code-server --bind-addr 127.0.0.1:8080 --auth none
 Restart=always
 
 [Install]
