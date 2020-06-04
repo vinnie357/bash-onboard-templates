@@ -95,7 +95,10 @@ EOF
 sudo systemctl enable --now code-server
 # install extensions for coder as user
 wget $(curl -s https://api.github.com/repos/DumpySquare/vscode-f5-fast/releases | grep browser_download_url | grep '.vsix' | head -n 1 | cut -d '"' -f 4) 
-sudo -u $user code-server --install-extension $(ls *vsix)
+file=$(ls *.vsix)
+# azure rm rights
+chown $user /var/lib/waagent/custom-script/download/0/$file
+sudo -u $user code-server --install-extension $file
 # exit user install
 su root
 rm *.vsix
