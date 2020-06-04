@@ -98,7 +98,7 @@ su $user
 wget $(curl -s https://api.github.com/repos/DumpySquare/vscode-f5-fast/releases | grep browser_download_url | grep '.vsix' | head -n 1 | cut -d '"' -f 4) 
 code-server --install-extension $(ls *vsix)
 # exit user install
-exit
+su root
 rm *.vsix
 systemctl restart code-server 
 # Now visit http://127.0.0.1:8080. Your password is in ~/.config/code-server/config.yaml
