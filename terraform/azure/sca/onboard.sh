@@ -97,8 +97,10 @@ sudo systemctl enable --now code-server
 wget $(curl -s https://api.github.com/repos/DumpySquare/vscode-f5-fast/releases | grep browser_download_url | grep '.vsix' | head -n 1 | cut -d '"' -f 4) 
 file=$(ls *.vsix)
 # azure rm rights
-chown $user /var/lib/waagent/custom-script/download/0/$file
-sudo -u $user code-server --install-extension $file
+cp /var/lib/waagent/custom-script/download/0/$file /home/$user/
+chown $user:$user /home/$user/$file
+rm -f /var/lib/waagent/custom-script/download/0/$file
+sudo -u $user code-server --install-extension /home/$user/$file
 # exit user install
 su root
 rm *.vsix
