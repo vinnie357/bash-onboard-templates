@@ -87,7 +87,7 @@ WantedBy=multi-user.target
 EOF
 sudo systemctl enable --now code-server
 # install extensions for coder as user
-extensionUrls="https://api.github.com/repos/DumpySquare/vscode-f5-fast/releases/tags/v0.1.9 https://api.github.com/repos/Microsoft/vscode-eslint/releases/latest"
+extensionUrls="https://api.github.com/repos/DumpySquare/vscode-f5-fast/releases/tags/v0.1.9 https://api.github.com/repos/Microsoft/vscode-eslint/releases/tags/release/2.1.4-next.1"
 for downloadUrl in $extensionUrls
 do
     wget $(curl -s $downloadUrl | jq -r '.assets[] | select(.name | contains (".vsix")) | .browser_download_url')
