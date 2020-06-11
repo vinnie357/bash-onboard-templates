@@ -132,8 +132,17 @@ WantedBy=multi-user.target
 EOF
 sudo systemctl enable --now code-server
 # install extensions for coder as user
-wget $(curl -s https://api.github.com/repos/DumpySquare/vscode-f5-fast/releases | grep browser_download_url | grep '.vsix' | head -n 1 | cut -d '"' -f 4) 
-sudo -u $user code-server --install-extension $(ls *vsix)
+extensionUrls="https://api.github.com/repos/DumpySquare/vscode-f5-fast/releases/tags/v0.1.9 https://api.github.com/repos/hashicorp/vscode-terraform/releases/latest"
+for downloadUrl in $extensionUrls
+do
+    wget $(curl -s $downloadUrl | jq -r '.assets[] | select(.name | contains (".vsix")) | .browser_download_url')
+done
+extensions=$(ls *vsix)
+for extension in $extensions
+do
+    #sudo -u $user code-server --install-extension $extension
+    echo $extension
+done
 # exit user install
 su root
 rm *.vsix

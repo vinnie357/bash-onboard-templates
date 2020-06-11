@@ -94,13 +94,20 @@ WantedBy=multi-user.target
 EOF
 sudo systemctl enable --now code-server
 # install extensions for coder as user
-wget $(curl -s https://api.github.com/repos/DumpySquare/vscode-f5-fast/releases | grep browser_download_url | grep '.vsix' | head -n 1 | cut -d '"' -f 4) 
-file=$(ls *.vsix)
-# azure rm rights
-cp /var/lib/waagent/custom-script/download/0/$file /home/$user/
-chown $user:$user /home/$user/$file
-rm -f /var/lib/waagent/custom-script/download/0/$file
-sudo -u $user code-server --install-extension /home/$user/$file
+extensionUrls="https://api.github.com/repos/DumpySquare/vscode-f5-fast/releases/tags/v0.1.9 https://api.github.com/repos/hashicorp/vscode-terraform/releases/latest"
+for downloadUrl in $extensionUrls
+do
+    wget $(curl -s $downloadUrl | jq -r '.assets[] | select(.name | contains (".vsix")) | .browser_download_url')
+done
+extensions=$(ls *vsix)
+for extension in $extensions
+do 
+    # azure rm rights
+    cp /var/lib/waagent/custom-script/download/0/$extension /home/$user/
+    chown $user:$user /home/$user/$extension
+    rm -f /var/lib/waagent/custom-script/download/0/$extension
+    sudo -u $user code-server --install-extension /home/$user/$extension
+done
 # exit user install
 su root
 systemctl restart code-server 
