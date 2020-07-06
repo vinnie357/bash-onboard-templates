@@ -64,7 +64,7 @@ set -ex \
 && curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add - \
 && sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" \
 && sudo apt-get update -y \
-&& sudo apt-get install -y apt-transport-https wget unzip jq git software-properties-common python3-pip ca-certificates gnupg-agent docker-ce docker-ce-cli containerd.io \
+&& sudo apt-get install -y apt-transport-https wget unzip jq git software-properties-common python3-pip ca-certificates gnupg-agent docker-ce docker-ce-cli containerd.io python3.8 python3.8-venv ubuntu-desktop mate-core mate-desktop-environment mate-notification-daemon tightvncserver xrdp \
 && echo "docker" \
 && sudo usermod -aG docker $user \
 && sudo chown -R $user: /var/run/docker.sock \
@@ -74,7 +74,8 @@ set -ex \
 && echo "awscli" \
 && sudo apt-get install awscli -y \
 && echo "f5 cli" \
-&& pip3 install f5-cli \
+&& sudo -u $user python3.8 -m venv /home/$user/venv \
+&& sudo -u $user /home/$user/venv/bin/pip install f5-cli \
 && echo "terragrunt" \
 && sudo wget https://github.com/gruntwork-io/terragrunt/releases/download/v"$terragruntVersion"/terragrunt_linux_amd64 \
 && sudo mv ./terragrunt_linux_amd64 /usr/local/bin/terragrunt \
@@ -84,7 +85,8 @@ set -ex \
 && echo "auto completion" \
 && complete -C '/usr/bin/aws_completer' aws \
 && terraform -install-autocomplete
-
+echo '# virtualenv ' >>/home/$user/.bashrc
+echo '. /home/$user/venv/bin/activate' >>/home/$user/.bashrc
 echo "test tools"
 echo '# test tools' >>/home/$user/.bashrc
 echo '/bin/bash /testTools.sh' >>/home/$user/.bashrc
@@ -189,5 +191,65 @@ openssl req -new -key server.key -out server.csr -subj "/C=US/ST=testville/L=tes
 openssl x509 -req -sha256 -days 365 -in server.csr -signkey server.key -out server.crt
 echo "=====start nginx====="
 docker run --network="host" --restart always --name nginx-coder -v /coder.conf:/etc/nginx/conf.d/default.conf -v /cert:/cert -p 443:443 -p 80:80 -d nginx
+echo "==== xrdp ===="
+# Configure xrdp
+cat << 'EOF' > /etc/xrdp/startwm.sh
+#!/bin/sh
+if [ -r /etc/default/locale ]; then
+  . /etc/default/locale
+  export LANG LANGUAGE
+fi
+mate-session
+. /etc/X11/Xsession
+EOF
+
+cat << 'EOF' > /etc/xrdp/xrdp.ini
+[Globals]
+ini_version=1
+fork=true
+port=3389
+tcp_nodelay=true
+tcp_keepalive=true
+security_layer=negotiate
+crypt_level=high
+certificate=
+key_file=
+ssl_protocols=TLSv1, TLSv1.1, TLSv1.2
+autorun=supernetops
+allow_channels=true
+allow_multimon=true
+bitmap_cache=true
+bitmap_compression=true
+bulk_compression=true
+max_bpp=16
+new_cursors=true
+use_fastpath=both
+[Logging]
+LogFile=xrdp.log
+LogLevel=DEBUG
+EnableSyslog=true
+SyslogLevel=DEBUG
+[Channels]
+rdpdr=true
+rdpsnd=true
+drdynvc=true
+cliprdr=true
+rail=true
+xrdpvr=true
+tcutils=true
+[f5lab]
+name=F5 Lab
+lib=libxup.so
+username=ubuntu
+password=ask
+ip=127.0.0.1
+port=-1
+code=20
+EOF
+
+sed -i.bak "s/FuseMountName=thinclient_drives/FuseMountName=remote_drives/g" /etc/xrdp/sesman.ini
+service xrdp start
+rm -Rf /root/xrdp
+
 echo "=====done====="
 exit
