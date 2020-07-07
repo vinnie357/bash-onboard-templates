@@ -86,7 +86,7 @@ set -ex \
 && complete -C '/usr/bin/aws_completer' aws \
 && terraform -install-autocomplete
 echo '# virtualenv ' >>/home/$user/.bashrc
-echo '. /home/$user/venv/bin/activate' >>/home/$user/.bashrc
+echo ". /home/$user/venv/bin/activate" >>/home/$user/.bashrc
 echo "test tools"
 echo '# test tools' >>/home/$user/.bashrc
 echo '/bin/bash /testTools.sh' >>/home/$user/.bashrc
