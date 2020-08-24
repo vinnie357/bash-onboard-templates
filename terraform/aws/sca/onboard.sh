@@ -140,7 +140,7 @@ done
 extensions=$(ls *vsix)
 for extension in $extensions
 do
-    #sudo -u $user code-server --install-extension $extension
+    sudo -u $user code-server --install-extension $extension
     echo $extension
 done
 # exit user install
