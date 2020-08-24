@@ -61,26 +61,26 @@ terragruntVersion="0.23.4"
 # }
 #
 set -ex \
-&& curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add - \
-&& sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" \
-&& sudo apt-get update -y \
-&& sudo apt-get install -y apt-transport-https wget unzip jq git software-properties-common python3-pip ca-certificates gnupg-agent docker-ce docker-ce-cli containerd.io \
+&& curl -fsSL https://download.docker.com/linux/ubuntu/gpg |  apt-key add - \
+&&  add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" \
+&&  apt-get update -y \
+&&  apt-get install -y apt-transport-https wget unzip jq git software-properties-common python3-pip ca-certificates gnupg-agent docker-ce docker-ce-cli containerd.io \
 && echo "docker" \
-&& sudo usermod -aG docker $user \
-&& sudo chown -R $user: /var/run/docker.sock \
+&&  usermod -aG docker $user \
+&&  chown -R $user: /var/run/docker.sock \
 && echo "terraform" \
-&& sudo wget https://releases.hashicorp.com/terraform/$terraformVersion/terraform_"$terraformVersion"_linux_amd64.zip \
-&& sudo unzip ./terraform_"$terraformVersion"_linux_amd64.zip -d /usr/local/bin/ \
+&&  wget https://releases.hashicorp.com/terraform/$terraformVersion/terraform_"$terraformVersion"_linux_amd64.zip \
+&&  unzip ./terraform_"$terraformVersion"_linux_amd64.zip -d /usr/local/bin/ \
 && echo "awscli" \
-&& sudo apt-get install awscli -y \
+&&  apt-get install awscli -y \
 && echo "f5 cli" \
 && pip3 install f5-cli \
 && echo "terragrunt" \
-&& sudo wget https://github.com/gruntwork-io/terragrunt/releases/download/v"$terragruntVersion"/terragrunt_linux_amd64 \
-&& sudo mv ./terragrunt_linux_amd64 /usr/local/bin/terragrunt \
-&& sudo chmod +x /usr/local/bin/terragrunt \
+&&  wget https://github.com/gruntwork-io/terragrunt/releases/download/v"$terragruntVersion"/terragrunt_linux_amd64 \
+&&  mv ./terragrunt_linux_amd64 /usr/local/bin/terragrunt \
+&&  chmod +x /usr/local/bin/terragrunt \
 && echo "chef Inspec" \
-&& curl https://omnitruck.chef.io/install.sh | sudo bash -s -- -P inspec \
+&& curl https://omnitruck.chef.io/install.sh |  bash -s -- -P inspec \
 && echo "auto completion" \
 && complete -C '/usr/bin/aws_completer' aws \
 && terraform -install-autocomplete
@@ -109,12 +109,12 @@ do
     git clone $repo
     name=$(basename $repo )
     folder=$(basename $name .git)
-    sudo chown -R $user $folder
+    chown -R $user $folder
 done
 IFS=$ifsDefault
 echo "=====install coder====="
 curl -sSOL https://github.com/cdr/code-server/releases/download/v3.4.1/code-server_3.4.1_amd64.deb
-sudo dpkg -i code-server_3.4.1_amd64.deb
+ dpkg -i code-server_3.4.1_amd64.deb
 cat > /lib/systemd/system/code-server.service <<EOF
 [Unit]
 Description=code-server
@@ -130,7 +130,7 @@ Restart=always
 [Install]
 WantedBy=multi-user.target
 EOF
-sudo systemctl enable --now code-server
+systemctl enable --now code-server
 # install extensions for coder as user
 extensionUrls="https://api.github.com/repos/DumpySquare/vscode-f5-fast/releases/tags/v2.0.1 https://api.github.com/repos/hashicorp/vscode-terraform/releases/latest"
 for downloadUrl in $extensionUrls
