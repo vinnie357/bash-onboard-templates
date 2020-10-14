@@ -72,8 +72,8 @@ IFS=$ifsDefault
 cd $cwd
 echo "=====install coder====="
 coderVersion="3.6.0"
-curl -sSOL https://github.com/cdr/code-server/releases/download/v${coderVersion}/code-server_${coderVersion}_amd64.deb
-sudo dpkg -i code-server_${coderVersion}_amd64.deb
+curl -sSOL https://github.com/cdr/code-server/releases/download/v$${coderVersion}/code-server_$${coderVersion}_amd64.deb
+sudo dpkg -i code-server_$${coderVersion}_amd64.deb
 cat > /lib/systemd/system/code-server.service <<EOF
 [Unit]
 Description=code-server
