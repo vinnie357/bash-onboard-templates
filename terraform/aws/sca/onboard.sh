@@ -113,8 +113,9 @@ do
 done
 IFS=$ifsDefault
 echo "=====install coder====="
-curl -sSOL https://github.com/cdr/code-server/releases/download/v3.4.1/code-server_3.4.1_amd64.deb
- dpkg -i code-server_3.4.1_amd64.deb
+coderVersion="3.6.0"
+curl -sSOL https://github.com/cdr/code-server/releases/download/v$${coderVersion}/code-server_$${coderVersion}_amd64.deb
+sudo dpkg -i code-server_$${coderVersion}_amd64.deb
 cat > /lib/systemd/system/code-server.service <<EOF
 [Unit]
 Description=code-server
