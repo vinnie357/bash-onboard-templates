@@ -54,6 +54,8 @@ inspec version
 terragrunt -version
 f5 --version
 gcloud version
+echo "qbo:"
+qbo version
 echo "=====Installed Versions====="
 EOF
 echo "clone repositories"
@@ -149,7 +151,12 @@ echo "=====start nginx====="
 docker run --network="host" --restart always --name nginx-coder -v /coder.conf:/etc/nginx/conf.d/default.conf -v /cert:/cert -p 443:443 -p 80:80 -d nginx
 
 echo "====setup qbo===="
-git clone https://github.com/alexeadem/qbo-ctl.git 
+cd /home/$user
+repo="https://github.com/alexeadem/qbo-ctl.git"
+git clone $repo
+name=$(basename $repo )
+folder=$(basename $name .git)
+sudo chown -R $user $folder
 cd qbo-ctl
 # setup
 sudo -u $user ./qbo-env.sh
@@ -158,7 +165,7 @@ qboconfig=$(cat -<<EOF
 # -----BEGIN QBO CONFIG-----
 # Run or add the lines below to ~/.bashrc
 # qbo
-alias qbo=\"docker run -t --user=1000:1001 -v /var/run/docker.sock:/var/run/docker.sock -v /home/$${user}/.qbo:/tmp/qbo eadem/qbo:latest qbo\"
+alias qbo="docker run -t --user=1000:1001 -v /var/run/docker.sock:/var/run/docker.sock -v /home/$${user}/.qbo:/tmp/qbo eadem/qbo:latest qbo"
 # kubeconfig
 export KUBECONFIG=/home/$${user}/.qbo/admin.conf
 # -----END QBO CONFIG-----
