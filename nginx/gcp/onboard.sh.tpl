@@ -152,7 +152,11 @@ echo "=====start nginx====="
 docker run --network="host" --restart always --name nginx-coder -v /coder.conf:/etc/nginx/conf.d/default.conf -v /cert:/cert -p 443:443 -p 80:80 -d nginx
 
 echo "====setup qbo===="
-# setup
+## setup
+# make dir
+mkdir -p /home/$user/.qbo
+chown $user:$user /home/$user/.qbo
+# pull container
 repo="eadem/qbo:latest"
 docker pull $repo
 # config
