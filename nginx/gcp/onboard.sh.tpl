@@ -160,8 +160,8 @@ sudo chown -R $user $folder
 cd qbo-ctl
 # setup
 sudo -u $user ./qbo-env.sh
-cp -R ~/.qbo /home/$${user}/.qbo
-chown $user:$user /home/$${user}/.qbo
+# cp -R ~/.qbo /home/$${user}/.qbo
+# chown $user:$user /home/$${user}/.qbo
 # config
 qboconfig=$(cat -<<EOF
 # -----BEGIN QBO CONFIG-----
@@ -174,7 +174,7 @@ export KUBECONFIG=/home/$${user}/.qbo/admin.conf
 EOF
 )
 echo "$qboconfig" >> /home/$user/.bashrc
-# default culster 2 worker with registry port open
+# default cluster two workers with registry port open
 #qbo add cluster -w2 -d mylab.com -p 5000
 echo "====setup qbo done===="
 
