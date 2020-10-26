@@ -56,6 +56,7 @@ f5 --version
 gcloud version
 echo "qbo:"
 qbo version
+kubectl version
 echo "=====Installed Versions====="
 EOF
 echo "clone repositories"
@@ -159,7 +160,7 @@ qboconfig=$(cat -<<EOF
 # -----BEGIN QBO CONFIG-----
 # Run or add the lines below to ~/.bashrc
 # qbo
-alias qbo="docker run -t --user=$(id -u):$(getent group docker | awk -F ':' '{print $3}') -v /var/run/docker.sock:/var/run/docker.sock -v /home/$${user}/.qbo:/tmp/qbo $${repo} qbo"
+alias qbo="docker run -t --user=$(cat /etc/passwd | grep $${user}: | awk -F ':' '{print $3}'):$(getent group docker | awk -F ':' '{print $3}') -v /var/run/docker.sock:/var/run/docker.sock -v /home/$${user}/.qbo:/tmp/qbo $${repo} qbo"
 # kubeconfig
 export KUBECONFIG=/home/${user}/.qbo/admin.conf
 # -----END QBO CONFIG-----
@@ -169,18 +170,21 @@ echo "$qboconfig" >> /home/$user/.bashrc
 echo "====setup qbo done===="
 
 echo "====setup kubectl===="
-apt-get update && apt-get install -y apt-transport-https gnupg2 curl
-curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
-echo "deb https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee -a /etc/apt/sources.list.d/kubernetes.list
-sudo apt-get update
-sudo apt-get install -y kubectl
+# apt-get update && apt-get install -y apt-transport-https gnupg2 curl
+# curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
+# echo "deb https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee -a /etc/apt/sources.list.d/kubernetes.list
+# sudo apt-get update
+# sudo apt-get install -y kubectl
+curl -LO https://storage.googleapis.com/kubernetes-release/release/`curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt`/bin/linux/amd64/kubectl
+mv kubectl /usr/bin/
+chmod +x /usr/bin/kubectl
 echo "====setup kubectl done===="
 
 echo "====setup qbo cluster===="
 # default cluster two workers with registry port open
-su - $user -c "qbo add cluster -w2 -d mylab.com -p 5000"
-# exit user
-exit
+repo="eadem/qbo:latest"
+su - $user -c "docker run -t --user=$(cat /etc/passwd | grep $${user}: | awk -F ':' '{print $3}'):$(cat /etc/group | grep docker: | awk -F ':' '{print $3}') -v /var/run/docker.sock:/var/run/docker.sock -v /home/$${user}/.qbo:/tmp/qbo $${repo} qbo add cluster -w2 -d mylab.com -p 5000"
+su - $user -c "kubectl apply -f https://raw.githubusercontent.com/alexeadem/qbo-ctl/master/conf/registry.yaml"
 echo "====setup qbo cluster done===="
 
 echo "===== all done====="
