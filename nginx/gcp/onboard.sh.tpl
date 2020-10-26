@@ -151,31 +151,21 @@ echo "=====start nginx====="
 docker run --network="host" --restart always --name nginx-coder -v /coder.conf:/etc/nginx/conf.d/default.conf -v /cert:/cert -p 443:443 -p 80:80 -d nginx
 
 echo "====setup qbo===="
-cd /home/$user
-repo="https://github.com/alexeadem/qbo-ctl.git"
-git clone $repo
-name=$(basename $repo )
-folder=$(basename $name .git)
-sudo chown -R $user $folder
-cd qbo-ctl
 # setup
-sudo -u $user ./qbo-env.sh
-# cp -R ~/.qbo /home/$${user}/.qbo
-# chown $user:$user /home/$${user}/.qbo
+repo="eadem/qbo:latest"
+docker pull $repo
 # config
 qboconfig=$(cat -<<EOF
 # -----BEGIN QBO CONFIG-----
 # Run or add the lines below to ~/.bashrc
 # qbo
-alias qbo="docker run -t --user=1000:1001 -v /var/run/docker.sock:/var/run/docker.sock -v /home/$${user}/.qbo:/tmp/qbo eadem/qbo:latest qbo"
+alias qbo="docker run -t --user=$(id -u):$(getent group docker | awk -F ':' '{print $3}') -v /var/run/docker.sock:/var/run/docker.sock -v /home/$${user}/.qbo:/tmp/qbo $${repo} qbo"
 # kubeconfig
-export KUBECONFIG=/home/$${user}/.qbo/admin.conf
+export KUBECONFIG=/home/${user}/.qbo/admin.conf
 # -----END QBO CONFIG-----
 EOF
 )
 echo "$qboconfig" >> /home/$user/.bashrc
-# default cluster two workers with registry port open
-#qbo add cluster -w2 -d mylab.com -p 5000
 echo "====setup qbo done===="
 
 echo "====setup kubectl===="
@@ -185,5 +175,13 @@ echo "deb https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee -a /etc/
 sudo apt-get update
 sudo apt-get install -y kubectl
 echo "====setup kubectl done===="
-echo "=====done====="
+
+echo "====setup qbo cluster===="
+# default cluster two workers with registry port open
+su - $user -c "qbo add cluster -w2 -d mylab.com -p 5000"
+# exit user
+exit
+echo "====setup qbo cluster done===="
+
+echo "===== all done====="
 exit
