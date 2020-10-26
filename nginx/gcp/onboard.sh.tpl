@@ -54,8 +54,6 @@ inspec version
 terragrunt -version
 f5 --version
 gcloud version
-echo "qbo:"
-qbo version
 kubectl version
 echo "=====Installed Versions====="
 EOF
@@ -188,7 +186,8 @@ echo "====setup qbo cluster===="
 # default cluster two workers with registry port open
 repo="eadem/qbo:latest"
 su - $user -c "docker run -t --user=$(cat /etc/passwd | grep $${user}: | awk -F ':' '{print $3}'):$(cat /etc/group | grep docker: | awk -F ':' '{print $3}') -v /var/run/docker.sock:/var/run/docker.sock -v /home/$${user}/.qbo:/tmp/qbo $${repo} qbo add cluster -w2 -d mylab.com -p 5000"
-su - $user -c "kubectl apply -f https://raw.githubusercontent.com/alexeadem/qbo-ctl/master/conf/registry.yaml"
+# start registry
+kubectl --kubeconfig /home/$${user}/.qbo/admin.conf apply -f "https://raw.githubusercontent.com/alexeadem/qbo-ctl/master/conf/registry.yaml"
 echo "====setup qbo cluster done===="
 
 echo "===== all done====="
