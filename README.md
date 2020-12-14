@@ -1,4 +1,4 @@
-# workspace-onboard-bash-templates
+# bash-onboard-templates
 bash startup scripts for development boxes
 
 # example template
