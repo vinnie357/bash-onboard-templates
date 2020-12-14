@@ -9,7 +9,7 @@ bash startup scripts for development boxes
         
         template = "${data.http.template_vscode_dev.body}"
         vars = {
-            repositories       	  = "https://github.com/vinnie357/bigip-bash-onboard-templates.git,https://github.com/vinnie357/workspace-onboard-bash-templates.git"
+            repositories       	  = "https://github.com/vinnie357/bigip-bash-onboard-templates.git,https://github.com/vinnie357/bash-onboard-templates.git"
             user            	  = "zadmin"
         }
     }
