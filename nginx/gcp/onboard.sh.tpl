@@ -92,7 +92,8 @@ WantedBy=multi-user.target
 EOF
 sudo systemctl enable --now code-server
 # install extensions for coder as user
-extensionUrls="https://api.github.com/repos/f5devcentral/vscode-f5/releases/latest https://api.github.com/repos/hashicorp/vscode-terraform/releases/latest"
+#extensionUrls="https://api.github.com/repos/f5devcentral/vscode-f5/releases/latest https://api.github.com/repos/hashicorp/vscode-terraform/releases/latest"
+extensionUrls="https://api.github.com/repos/f5devcentral/vscode-f5/releases/latest https://api.github.com/repos/hashicorp/vscode-terraform/releases/tags/v2.4.0"
 for downloadUrl in $extensionUrls
 do
     wget $(curl -s $downloadUrl | jq -r '.assets[] | select(.name | contains (".vsix")) | .browser_download_url')
