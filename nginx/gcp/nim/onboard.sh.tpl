@@ -10,36 +10,44 @@ else
     exit
 fi
 exec 1>$LOG_FILE 2>&1
-echo "starting"
+echo "==== starting ===="
 apt-get update
 apt-get install jq apt-transport-https ca-certificates -y
 # make folders
 mkdir /etc/ssl/nginx
 cd /etc/ssl/nginx
 # license
+echo "==== secrets ===="
 # access secret from secretsmanager
 secrets=$(gcloud secrets versions access latest --secret="${secretName}")
 # install cert key
 echo "setting info from Metadata secret"
 # cert
-cat << EOF > /etc/ssl/nginx/nginx-manager-repo.crt
+cat << EOF > /etc/ssl/nginx/nginx-repo.crt
 $(echo $secrets | jq -r .cert)
 EOF
 # key
-cat << EOF > /etc/ssl/nginx/nginx-manager-repo.key
+cat << EOF > /etc/ssl/nginx/nginx-repo.key
 $(echo $secrets | jq -r .key)
 EOF
+echo "==== repos ===="
 # add repo with signing key
 wget https://nginx.org/keys/nginx_signing.key
 apt-key add nginx_signing.key
 apt-get install apt-transport-https lsb-release ca-certificates
 
-printf "deb https://pkgs.nginx.com/instance-manager/debian stable nginx-plus\n" | sudo /etc/apt/sources.list.d/instance-manager.list
+
+printf "deb https://pkgs.nginx.com/instance-manager/debian stable nginx-plus\n" | tee /etc/apt/sources.list.d/instance-manager.list
 wget -q -O /etc/apt/apt.conf.d/90pkgs-nginx https://cs.nginx.com/static/files/90pkgs-nginx
+
 apt-get update
 
+
+
+
 # install
-sudo apt-get install -y nginx-manager
+echo "==== install ===="
+apt-get install -y nginx-manager
 
 function fileInstall {
 # file download install
@@ -48,8 +56,11 @@ function fileInstall {
 # install
 apt-get -y install /home/user/nginx-manager-0.9.0-1_amd64.deb
 }
-
+# get localip
+echo "=== get ip ==="
+local_ipv4="$(curl http://169.254.169.254/latest/meta-data/local-ipv4)"
 # config
+echo "==== config ===="
 cat > /etc/nginx-manager/nginx-manager.conf <<EOF 
 #
 # /etc/nginx-manager/nginx-manager.conf
@@ -58,16 +69,16 @@ cat > /etc/nginx-manager/nginx-manager.conf <<EOF
 # Configuration file for NGINX Instance Manager Server
 
 # bind address for all service ports (default "127.0.0.1")
-bind-address: 10.1.1.4
+bind-address: 0.0.0.0
 # gRPC service port for agent communication (default "10000")
 grpc-port: 10000
 # gRPC-gateway service port for API and UI (default "11000")
 gateway-port: 11000
 
 # # path to x.509 certificate file (optional)
-# cert:
+cert: /etc/ssl/nginx/nginx-repo.crt
 # # path to x.509 certificate key file (optional)
-# key:
+key: /etc/ssl/nginx/nginx-repo.key
 
 # set log level (panic, fatal, error, info, debug, trace; default: info) (default "info")
 log:
@@ -86,4 +97,8 @@ semanage port -a -t nginx-manager_port_t -p tcp 10001
 semanage port -a -t nginx-manager_port_t -p tcp 11001
 }
 # start
+echo "==== start service ===="
 systemctl start nginx-manager
+
+echo "==== done ===="
+exit
