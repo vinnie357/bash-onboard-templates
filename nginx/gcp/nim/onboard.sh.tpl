@@ -40,15 +40,19 @@ wget https://nginx.org/keys/nginx_signing.key
 apt-key add nginx_signing.key
 apt-get install apt-transport-https lsb-release ca-certificates
 
-
+# instance manager
 printf "deb https://pkgs.nginx.com/instance-manager/debian stable nginx-plus\n" | tee /etc/apt/sources.list.d/instance-manager.list
 wget -q -O /etc/apt/apt.conf.d/90pkgs-nginx https://cs.nginx.com/static/files/90pkgs-nginx
+# nginx-plus
+printf "deb https://plus-pkgs.nginx.com/ubuntu `lsb_release -cs` nginx-plus\n" | tee /etc/apt/sources.list.d/nginx-plus.list
+wget -q -O /etc/apt/apt.conf.d/90nginx https://cs.nginx.com/static/files/90nginx
 
 apt-get update
 
 # install
 echo "==== install ===="
 apt-get install -y nginx-manager
+apt-get install -y nginx-plus
 
 function fileInstall {
 # file download install
@@ -132,29 +136,8 @@ apt install -y nginx-manager-selinux
 semanage port -a -t nginx-manager_port_t -p tcp 10001
 semanage port -a -t nginx-manager_port_t -p tcp 11001
 }
-# start
-echo "==== start service ===="
-systemctl start nginx-manager
-systemctl enable nginx-manager
 
-function NGINX {
-secrets=$(gcloud secrets versions access latest --secret="${secretName}")
-# cert
-cat << EOF > /etc/ssl/nginx/nginx-repo.crt
-$(echo $secrets | jq -r .nginxCert)
-EOF
-# key
-cat << EOF > /etc/ssl/nginx/nginx-repo.key
-$(echo $secrets | jq -r .nginxKey)
-EOF
-# get packages
-apt-get install apt-transport-https lsb-release ca-certificates -y
-printf "deb https://plus-pkgs.nginx.com/ubuntu `lsb_release -cs` nginx-plus\n" | sudo tee /etc/apt/sources.list.d/nginx-plus.list
-wget -q -O /etc/apt/apt.conf.d/90nginx https://cs.nginx.com/static/files/90nginx
-# install nginx-plus
-apt-get update
-apt-get install -y nginx-plus
-
+function PLUS_CONFIG {
 # grpc errors map
 cat << 'EOF' > /etc/nginx/conf.d/errors.grpc_conf
 # Standard HTTP-to-gRPC status code mappings
@@ -258,7 +241,7 @@ server {
     ssl_protocols   TLSv1.2 TLSv1.3;
     ssl_ciphers EECDH+CHACHA20:EECDH+AES128:RSA+AES128:EECDH+AES256:RSA+AES256:EECDH+3DES:RSA+3DES:!MD5;
     ssl_prefer_server_ciphers   off;
-    
+
     location / {
         proxy_pass https://nginx-manager_servers;
         health_check uri=/swagger-ui/;
@@ -297,8 +280,8 @@ server {
     location / {
         proxy_pass https://nginx-manager_servers/;
             health_check uri=/swagger-ui/;
-            proxy_set_header Connection ""; 
-            proxy_http_version 1.1; 
+            proxy_set_header Connection "";
+            proxy_http_version 1.1;
     }
 
 }
@@ -321,22 +304,22 @@ server {
         proxy_pass  https://nginx-manager_servers/swagger-ui/;
         proxy_set_header Host                   $http_host$server_port;
         proxy_set_header X-Real-IP              $remote_addr;
-        proxy_set_header Connection "";    
-        proxy_http_version 1.1;  
+        proxy_set_header Connection "";
+        proxy_http_version 1.1;
     }
 
     location /api/ {
         proxy_pass https://nginx-manager_servers;
         proxy_set_header Host                   $http_host$server_port;
         proxy_set_header X-Real-IP              $remote_addr;
-        proxy_set_header Connection "";    
-        proxy_http_version 1.1;  
+        proxy_set_header Connection "";
+        proxy_http_version 1.1;
     }
 
     location /ui/ {
         proxy_pass  https://nginx-manager_servers/swagger-ui/;
-        proxy_set_header Connection "";    
-        proxy_http_version 1.1;  
+        proxy_set_header Connection "";
+        proxy_http_version 1.1;
     }
 
 }
@@ -350,41 +333,41 @@ upstream nginx-manager_servers {
 EOF
 # api
 cat << 'EOF' > /etc/nginx/conf.d/status_api.conf
-# This sample NGINX Plus configuration enables the NGINX Plus API, for live 
-# activity monitoring and the built-in dashboard, dynamic configuration of 
-# upstream groups, and key-value stores. Keep in mind that any features 
-# added to the API in future NGINX Plus releases will be enabled 
+# This sample NGINX Plus configuration enables the NGINX Plus API, for live
+# activity monitoring and the built-in dashboard, dynamic configuration of
+# upstream groups, and key-value stores. Keep in mind that any features
+# added to the API in future NGINX Plus releases will be enabled
 # automatically by this file.
 # Created in May 2018 by NGINX, Inc. for NGINX Plus R14 and later.
 
-# Documentation: 
+# Documentation:
 # https://docs.nginx.com/nginx/admin-guide/monitoring/live-activity-monitoring/
 # https://www.nginx.com/blog/live-activity-monitoring-nginx-plus-3-simple-steps
 
-# To conform with the conventional configuration scheme, place this file in 
-# the /etc/nginx/conf.d directory and add an 'include' directive that 
-# references it in the main configuration file, /etc/nginx/nginx.conf, 
+# To conform with the conventional configuration scheme, place this file in
+# the /etc/nginx/conf.d directory and add an 'include' directive that
+# references it in the main configuration file, /etc/nginx/nginx.conf,
 # either by name or with a wildcard expression. Then validate and reload
 # the configuration, for example with this command:
 #
 #     nginx -t && nginx -s reload
 
-# Note that additional directives are required in other parts of the 
+# Note that additional directives are required in other parts of the
 # configuration:
 #
-# For metrics to be gathered for an HTTP or TCP/UDP virtual server, you must 
-# include the 'status_zone' directive in its 'server' block. See: 
+# For metrics to be gathered for an HTTP or TCP/UDP virtual server, you must
+# include the 'status_zone' directive in its 'server' block. See:
 # http://nginx.org/r/status_zone
 #
-# Similarly, for metrics to be gathered for an upstream server group, you 
+# Similarly, for metrics to be gathered for an upstream server group, you
 # must include the 'zone' directive in the 'upstream' block. See:
 # http://nginx.org/r/zone
 #
 # For more information and instructions, see:
 # https://docs.nginx.com/nginx/admin-guide/monitoring/live-activity-monitoring#status_data
 
-# We strongly recommend that you restrict access to the NGINX Plus API so 
-# that only authorized users can view metrics and configuration, change 
+# We strongly recommend that you restrict access to the NGINX Plus API so
+# that only authorized users can view metrics and configuration, change
 # configuration, or both. Here are a few options:
 #
 # (1) Configure your firewall to limit access to port 8080.
@@ -392,22 +375,22 @@ cat << 'EOF' > /etc/nginx/conf.d/status_api.conf
 # (2) Use SSL/TLS client certificates. See:
 #    https://docs.nginx.com/nginx/admin-guide/security-controls/terminating-ssl-http/
 #
-# (3) Enable HTTP Basic authentication (RFC 7617) by uncommenting the 
-#    'auth_basic*' directives in the 'server' block below. You can add users 
-#    with an htpasswd generator, which is readily available, or reuse an 
-#    existing htpasswd file (from an Apache HTTP Server, for example).  See: 
+# (3) Enable HTTP Basic authentication (RFC 7617) by uncommenting the
+#    'auth_basic*' directives in the 'server' block below. You can add users
+#    with an htpasswd generator, which is readily available, or reuse an
+#    existing htpasswd file (from an Apache HTTP Server, for example).  See:
 #    http://nginx.org/en/docs/http/ngx_http_auth_basic_module.html
 #
-# (4) Enable access from a defined network and disable it from all others, 
+# (4) Enable access from a defined network and disable it from all others,
 #    by uncommenting the 'allow' and 'deny' directives in the 'server' block
-#    below and specifying the appropriate network ranges. See: 
+#    below and specifying the appropriate network ranges. See:
 #    http://nginx.org/en/docs/http/ngx_http_access_module.html
 #
 # You can create further restrictions on write operations, to distinguish
 # between users with read permission and those who can change configuration.
-# Uncomment the sample 'limit_except' directive in the 'location api' 
-# block below. In addition to the HTTP Basic authentication shown, other 
-# authentication schemes are supported. See: 
+# Uncomment the sample 'limit_except' directive in the 'location api'
+# block below. In addition to the HTTP Basic authentication shown, other
+# authentication schemes are supported. See:
 # http://nginx.org/r/limit_except
 
 server {
@@ -417,7 +400,7 @@ server {
 #    access_log off; # Don't log access here (test env)
     access_log /var/log/nginx/status-access.log;
     error_log /var/log/nginx/status-error.log;
-    
+
     # Uncomment to use HTTP Basic authentication; see (3) above
     #auth_basic "NGINX Plus API";
     #auth_basic_user_file /etc/nginx/users;
@@ -426,7 +409,7 @@ server {
     #allow 10.0.0.0/8;
     #deny all;
 
-    # Conventional location for accessing the NGINX Plus API 
+    # Conventional location for accessing the NGINX Plus API
     location /api/ {
         # Enable in read-write mode
         api write=on;
@@ -460,9 +443,15 @@ server {
     }
 }
 EOF
-echo "==== nginx-plus done ===="
+echo "==== nginx-plus config done ===="
 }
-
+PLUS_CONFIG
+# start
+echo "==== start service ===="
+systemctl start nginx-manager
+systemctl start nginx
+systemctl enable nginx-manager
+systemctl enable nginx
 echo "==== done ===="
 #systemctl status nginx-manager
 exit
