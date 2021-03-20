@@ -1,10 +1,12 @@
+#!/usr/bin/env bash
+set -e
 # NIM startup
 # logging
 LOG_FILE="/var/log/startup.log"
 if [ ! -e $LOG_FILE ]
 then
-     touch $LOG_FILE
-     exec &>>$LOG_FILE
+    touch $LOG_FILE
+    exec &>>$LOG_FILE
 else
     #if file exists, exit as only want to run once
     exit
@@ -12,17 +14,8 @@ fi
 exec 1>$LOG_FILE 2>&1
 
 echo "==== starting ===="
-apt-get update
-apt-get install jq apt-transport-https ca-certificates -y
-# make folders
-mkdir /etc/ssl/nginx
-cd /etc/ssl/nginx
-
-# license
-echo "==== secrets ===="
-# access secret from secretsmanager
-secrets=$(gcloud secrets versions access latest --secret="${secretName}")
-
+mkdir -p /etc/ssl/nginx
+secrets=$(curl -s --header "X-Vault-Token: ${VAULT_TOKEN}" --request GET https://${VAULT_HOST}:${VAULT_PORT}/v1/secret/data/${SECRET_NAME} | jq .data.data)
 # install cert key
 echo "setting info from Metadata secret"
 # cert
@@ -33,39 +26,25 @@ EOF
 cat << EOF > /etc/ssl/nginx/nginx-repo.key
 $(echo $secrets | jq -r .key)
 EOF
-
 echo "==== repos ===="
 # add repo with signing key
 wget https://nginx.org/keys/nginx_signing.key
 apt-key add nginx_signing.key
-apt-get install apt-transport-https lsb-release ca-certificates
-
 # instance manager
 printf "deb https://pkgs.nginx.com/instance-manager/debian stable nginx-plus\n" | tee /etc/apt/sources.list.d/instance-manager.list
 wget -q -O /etc/apt/apt.conf.d/90pkgs-nginx https://cs.nginx.com/static/files/90pkgs-nginx
 # nginx-plus
 printf "deb https://plus-pkgs.nginx.com/ubuntu `lsb_release -cs` nginx-plus\n" | tee /etc/apt/sources.list.d/nginx-plus.list
 wget -q -O /etc/apt/apt.conf.d/90nginx https://cs.nginx.com/static/files/90nginx
-
 apt-get clean
 apt-get update
-
 # install
 echo "==== install ===="
 apt-get install -y nginx-manager
 apt-get install -y nginx-plus
-
-function fileInstall {
-# file download install
-# download form remote source
-# unzip
-# install
-apt-get -y install /home/user/nginx-manager-0.9.0-1_amd64.deb
-}
-
 # get localip
 echo "=== get ip ==="
-local_ipv4="$(curl -s "http://metadata.google.internal/computeMetadata/v1/instance/network-interfaces/0/ip" -H "Metadata-Flavor: Google")"
+local_ipv4="$$(ip -4 addr show ens192 | grep -oP '(?<=inet\s)\d+(\.\d+){3}')"
 # config
 echo "==== config ===="
 mkdir -p /var/nginx-manager/
@@ -104,13 +83,11 @@ metrics:
 license: /etc/nginx-manager/nginx-manager.lic
 
 EOF
-
 echo "==== license ===="
 # license
 cat << EOF > /etc/nginx-manager/nginx-manager.lic
 $(echo $secrets | jq -r .license)
 EOF
-
 echo "==== certs ===="
 path="/etc/ssl/nginx-manager"
 mkdir -p $path
@@ -122,25 +99,7 @@ openssl req -new -key $${path}/nginx-manager.key -out $${path}/server.csr -subj 
 openssl x509 -req -sha256 -days 365 -in $${path}/server.csr -signkey $${path}/nginx-manager.key -out $${path}/nginx-manager.crt
 rm $${path}/server.pass.key
 rm $${path}/server.csr
-# from secrets
-# # cert
-# cat << EOF > /etc/ssl/nginx-manager/nginx-manager.crt
-# $(echo $secrets | jq -r .webCert)
-# EOF
-# # key
-# cat << EOF > /etc/ssl/nginx-manager/nginx-manager.key
-# $(echo $secrets | jq -r .webKey)
-# EOF
-
-
-function selinux {
-# selinux
-apt install -y nginx-manager-selinux
-
-semanage port -a -t nginx-manager_port_t -p tcp 10001
-semanage port -a -t nginx-manager_port_t -p tcp 11001
-}
-
+#plus config
 function PLUS_CONFIG {
 #root@demo-nim-nim-nim-cat:~# ls /usr/share/doc/nginx-manager/nginx-plus/
 #README.md                     nginx-manager-grpc.conf  nginx-manager-noauth.conf  nginx-manager-upstreams.conf

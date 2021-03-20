@@ -1,1 +1,1 @@
-docker run --rm --name=gitleaks -v $(pwd):/code/ zricethezav/gitleaks -v --repo-path=/code/
+docker run --rm --name=gitleaks -v $(pwd):/code/ zricethezav/gitleaks -v --path=/code/
